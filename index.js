@@ -1,5 +1,4 @@
 import querystring from 'querystring';
-import Cookies from 'js-cookie';
 
 /**
  * Обертка над XmlHttpRequest
@@ -116,11 +115,9 @@ class SimpleXHR {
      * @param {string} url адрес запроса
      * @param {object} param1 параметры запроса
      */
-    request(url, { query = {}, withoutToken, withoutCity, ...params }) {
+    request(url, { query = {}, ...params }) {
         if (!this.pending) {
             this.pending = true;
-            if(!withoutToken) query.auth_token = Cookies.get('auth_token');
-            if(!withoutCity) query.city = Cookies.get('activeCity');
 
             this.xhr.open(this.method, `${url}?${querystring.stringify(query)}`, this.async);
 

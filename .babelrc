@@ -1,0 +1,7 @@
+{   
+    "presets": ["env", "react", "stage-0"],
+    "plugins": ["syntax-dynamic-import"],
+    "ignore": [
+        "/\/node_modules\/(?!app\/)/"
+    ]
+}
