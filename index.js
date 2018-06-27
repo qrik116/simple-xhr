@@ -1,9 +1,5 @@
 import querystring from 'querystring';
-import Cookies from 'js-cookie';
 
-/**
- * Обертка над XmlHttpRequest
- */
 class SimpleXHR {
     constructor() {
         this.method = 'GET';
@@ -12,67 +8,64 @@ class SimpleXHR {
         this.error = null;
         this.xhr = new XMLHttpRequest();
         this.xhr.timeout = 30000;
-        this.handlerLoad();
+        this.xhr.onload = this.handleLoad(this);
+        this.xhr.ontimeout = () => this.handlerError('Извините, запрос превысил максимальное время ожидания');
         this.pending = false;
         this.callbackResponce = [];
         this.callbackError = [];
     }
 
     /**
-     * Метод, устанавливающий событие полной загрузки на xhr
+     * Очищает объект от свойств с пустыми массивами
+     * @param object
      */
-    handlerLoad() {
-        const self = this;
+    static removeEmptyProps(object) {
+        const clearObject = {};
+        for (let prop in object) {
+            let value = object[prop];
+            if (Array.isArray(value) && value.length) {
+                clearObject[prop] = value;
+            }
+            if ((typeof value === 'string' && value.length) || typeof value === 'number') {
+                clearObject[prop] = value;
+            }
+        }
+        return clearObject;
+    }
+
+    /**
+     * Обработчик события полной загрузки на xhr
+     */
+    handleLoad(self) {
         let response = {};
 
-        this.xhr.onload = function onload() {
-            try {
-                if((this.status < 400 || this.status >= 500) && this.status !== 200) {
-                    throw `${this.status} ${this.statusText}`;
-                }
+        return function onLoad() {
+            if ((this.status < 400 || this.status >= 500) && this.status !== 200) {
+                self.handlerError(new Error(`${this.status} ${this.statusText}`));
+                return;
+            }
 
-                response = JSON.parse(this.responseText);
-
-                if (response.errors) {
-                    if(typeof response.errors === 'string') {
-                        throw response.errors;
-                    }
-                }
-
-                if (response.errors) {
-                    if(typeof response.errors === 'object' && Object.keys(response.errors).length > 0) {
+            response = JSON.parse(this.responseText);
+            if (response.errors) {
+                if (typeof response.errors === 'object') {
+                    const errorsKeys = Object.keys(response.errors).length;
+                    if (errorsKeys) {
                         const errors = {};
+                        errorsKeys.forEach((key) => { errors[key] = response.errors[key].msg; });
 
-                        Object.keys(response.errors).map(key => {
-                            errors[key] = response.errors[key].msg;
-                        });
-
-                        throw errors;
+                        response = errors;
                     }
                 }
-
-                self.handlerSuccess(response);
-            } catch (e) {
-                self.handlerError(e);
+                self.handlerError(new Error(response.errors));
+                return;
             }
-        }
+
+            self.handlerSuccess(response);
+        };
     }
 
     /**
-     * Метод, срабатывающий по истечению максимального времени жизни запроса
-     */
-    handlerTimeout() {
-        this.xhr.ontimeout = function ontimeout() {
-            try {
-                throw 'Извините, запрос превысил максимальное время ожидания';
-            } catch (e) {
-                this.handlerError(e);
-            }
-        }
-    }
-
-    /**
-     * Метод, обрабатывающий ошибки
+     * Обрабатчик ошибок
      * @param {*} error Ошибка
      */
     handlerError(error) {
@@ -92,7 +85,7 @@ class SimpleXHR {
     }
 
     /**
-     * Метод, обрабатывающий успешный запрос
+     * Обрабатчик успешного запроса
      * @param {*} data значение
      */
     handlerSuccess(data) {
@@ -112,27 +105,25 @@ class SimpleXHR {
     }
 
     /**
-     * Метод, выполняющий запрос
+     * Общий запрос
      * @param {string} url адрес запроса
      * @param {object} param1 параметры запроса
      */
-    request(url, { query = {}, withoutToken, withoutCity, ...params }) {
+    request(url, { query = {}, ...params }) {
         if (!this.pending) {
             this.pending = true;
-            if(!withoutToken) query.auth_token = Cookies.get('auth_token');
-            if(!withoutCity) query.city = Cookies.get('activeCity');
 
-            this.xhr.open(this.method, `${url}?${querystring.stringify(query)}`, this.async);
-
+            const clearQuery = SimpleXHR.removeEmptyProps(query);
+            this.xhr.open(this.method, `${url}?${querystring.stringify(clearQuery)}`, this.async);
             this.xhr.send(params);
         }
     }
 
     /**
-     * Метод, выполняющий get запрос
+     * GET запрос
      * @param {string} url адрес запроса
      * @param {object} param1 параметры запроса
-     * 
+     *
      * @return {object} self
      */
     get(url, { ...params }) {
@@ -144,43 +135,42 @@ class SimpleXHR {
     }
 
     /**
-     * Метод, выполняющий post запрос
+     * POST запрос
      * @param {string} url адрес запроса
-     * @param {object} param1 параметры запроса
-     * 
+     * @param {object} params параметры запроса
+     *
      * @return {object} self
      */
-    // TODO: Проверить метод
-    post(url, { ...params }) {
+    post(url, params) {
         this.method = 'POST';
 
         const options = {
             body: '',
-            ...params
-        }
+            ...params,
+        };
 
-        if(params.files) {
-            const files = params.files;
+        if (params.files) {
+            const { files } = params;
 
             options.body = new FormData();
 
-            Object.keys(files).forEach(key => {
+            Object.keys(files).forEach((key) => {
                 files[key].forEach(file => options.body.append(key, file));
             });
 
-            if(params.data) {
-                const data = params.data;
+            if (params.data) {
+                const { data } = params;
 
                 Object.keys(data).forEach(key => options.body.append(key, data[key]));
             }
-        } else if(params.data) {
-            const data = params.data;
+        } else if (params.data) {
+            const { data } = params;
 
             this.xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
 
-            if(typeof data === 'object') {
-                options.body = Object.keys(data).map(key => {
-                    if(Array.isArray(data[key])) {
+            if (typeof data === 'object') {
+                options.body = Object.keys(data).map((key) => {
+                    if (Array.isArray(data[key])) {
                         return data[key].map(value => querystring.stringify({ [key]: value })).join('&');
                     }
 
@@ -188,7 +178,7 @@ class SimpleXHR {
                 }).join('&');
             }
 
-            if(typeof data === 'string') {
+            if (typeof data === 'string') {
                 options.body = data;
             }
         }
@@ -201,7 +191,7 @@ class SimpleXHR {
      * Метод, содержащий callback
      * @param {function} callback функция, срабатывающая после того как запрос выполнен успешно, первым аргументом которой является ответ,
      * далее можно продолжить цепочку then возвращая значение в предыдущем.
-     * 
+     *
      * @return {object} self
      */
     then(callback) {
@@ -213,7 +203,7 @@ class SimpleXHR {
     /**
      * Метод, содержащий callback
      * @param {function} callback функция, срабатывающая после того как запрос выполнен c ошикой, первым аргументом которой является ошибка
-     * 
+     *
      * @return {object} self
      */
     catch(callback) {
@@ -223,7 +213,7 @@ class SimpleXHR {
     }
 
     /**
-     * Метод отменяющий запрос
+     * Отменяет запрос
      * @return {object} self
      */
     abort() {
