@@ -10,6 +10,7 @@ class SimpleXHR {
         this.xhr.timeout = 30000;
         this.xhr.onload = this.handleLoad(this);
         this.xhr.ontimeout = () => this.handlerError('Извините, запрос превысил максимальное время ожидания');
+        this.xhr.onerror = () => this.handlerError(`Ошибка ${this.xhr.status}`);
         this.pending = false;
         this.callbackResponce = [];
         this.callbackError = [];
