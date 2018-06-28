@@ -21,8 +21,10 @@ class SimpleXHR {
      */
     static removeEmptyProps(object) {
         const clearObject = {};
-        for (let prop in object) {
-            let value = object[prop];
+
+        for (const prop in object) {
+            const value = object[prop];
+
             if (Array.isArray(value) && value.length) {
                 clearObject[prop] = value;
             }
@@ -30,6 +32,7 @@ class SimpleXHR {
                 clearObject[prop] = value;
             }
         }
+
         return clearObject;
     }
 
@@ -49,10 +52,11 @@ class SimpleXHR {
             if (response.errors) {
                 if (typeof response.errors === 'object') {
                     const errorsKeys = Object.keys(response.errors).length;
+
                     if (errorsKeys) {
                         const errors = {};
-                        errorsKeys.forEach((key) => { errors[key] = response.errors[key].msg; });
 
+                        errorsKeys.forEach(key => errors[key] = response.errors[key].msg);
                         response = errors;
                     }
                 }
@@ -111,9 +115,9 @@ class SimpleXHR {
      */
     request(url, { query = {}, ...params }) {
         if (!this.pending) {
-            this.pending = true;
-
             const clearQuery = SimpleXHR.removeEmptyProps(query);
+
+            this.pending = true;
             this.xhr.open(this.method, `${url}?${querystring.stringify(clearQuery)}`, this.async);
             this.xhr.send(params);
         }
@@ -126,8 +130,8 @@ class SimpleXHR {
      *
      * @return {object} self
      */
-    get(url, { ...params }) {
-        this.method = 'GET';
+    get(url, { ...params }, customMethod = '') {
+        this.method = customMethod || 'GET';
 
         this.request(url, params);
 
@@ -141,12 +145,12 @@ class SimpleXHR {
      *
      * @return {object} self
      */
-    post(url, params) {
-        this.method = 'POST';
+    post(url, { ...params }, customMethod = '') {
+        this.method = customMethod || 'POST';
 
         const options = {
             body: '',
-            ...params,
+            ...params
         };
 
         if (params.files) {
@@ -188,9 +192,35 @@ class SimpleXHR {
     }
 
     /**
+     * PUT запрос
+     * @param {string} url адрес запроса
+     * @param {object} params параметры запроса
+     *
+     * @return {object} self
+     */
+    put(url, { ...params }) {
+        const method = 'PUT';
+
+        return this.post(url, params, method);
+    }
+
+    /**
+     * DELETE запрос
+     * @param {string} url адрес запроса
+     * @param {object} params параметры запроса
+     *
+     * @return {object} self
+     */
+    delete(url, { ...params }) {
+        const method = 'DELETE';
+
+        return this.get(url, params, method);
+    }
+
+    /**
      * Метод, содержащий callback
      * @param {function} callback функция, срабатывающая после того как запрос выполнен успешно, первым аргументом которой является ответ,
-     * далее можно продолжить цепочку then возвращая значение в предыдущем.
+     * далее можно продолжить цепочку then, возвращая значение в предыдущем.
      *
      * @return {object} self
      */
@@ -223,4 +253,20 @@ class SimpleXHR {
     }
 }
 
+const http = {
+    get(url, params) {
+        return new SimpleXHR().get(url, params);
+    },
+    post(url, params) {
+        return new SimpleXHR().post(url, params);
+    },
+    put(url, params) {
+        return new SimpleXHR().put(url, params);
+    },
+    delete(url, params) {
+        return new SimpleXHR().delete(url, params);
+    }
+}
+
+export { http };
 export default SimpleXHR;
