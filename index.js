@@ -16,27 +16,6 @@ class SimpleXHR {
     }
 
     /**
-     * Очищает объект от свойств с пустыми массивами
-     * @param object
-     */
-    static removeEmptyProps(object) {
-        const clearObject = {};
-
-        for (const prop in object) {
-            const value = object[prop];
-
-            if (Array.isArray(value) && value.length) {
-                clearObject[prop] = value;
-            }
-            if ((typeof value === 'string' && value.length) || typeof value === 'number') {
-                clearObject[prop] = value;
-            }
-        }
-
-        return clearObject;
-    }
-
-    /**
      * Обработчик события полной загрузки на xhr
      */
     handleLoad(self) {
@@ -115,10 +94,8 @@ class SimpleXHR {
      */
     request(url, { query = {}, ...params }) {
         if (!this.pending) {
-            const clearQuery = SimpleXHR.removeEmptyProps(query);
-
             this.pending = true;
-            this.xhr.open(this.method, `${url}?${querystring.stringify(clearQuery)}`, this.async);
+            this.xhr.open(this.method, `${url}?${querystring.stringify(query)}`, this.async);
             this.xhr.send(params);
         }
     }
