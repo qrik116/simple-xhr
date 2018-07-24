@@ -1,14 +1,22 @@
 {
-    "name": "simple-xhr",
-    "version": "1.0.0",
-    "scripts": {},
     "author": "qrik116",
-    "browserslist": [
-        "> 1%",
-        "last 2 versions"
+    "name": "xml-fetch",
+    "description": "XMLHttpRequest as fetch, using e6",
+    "version": "1.0.0",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/qrik116/simple-xhr"
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [
+        "simple xhr",
+        "XMLHttpRequest",
+        "ajax"
     ],
     "dependencies": {
-        "js-cookie": "^2.2.0",
         "querystring": "^0.2.0"
     }
 }
