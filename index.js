@@ -1,7 +1,7 @@
 import querystring from 'querystring';
 
-class SimpleXHR {
-    constructor() {
+class xmlFetch {
+    constructor() { // TODO: добавить конфигурацию
         this.method = 'GET';
         this.async = true;
         this.response = {};
@@ -233,18 +233,18 @@ class SimpleXHR {
 
 const http = {
     get(url, params) {
-        return new SimpleXHR().get(url, params);
+        return new xmlFetch().get(url, params);
     },
     post(url, params) {
-        return new SimpleXHR().post(url, params);
+        return new xmlFetch().post(url, params);
     },
     put(url, params) {
-        return new SimpleXHR().put(url, params);
+        return new xmlFetch().put(url, params);
     },
     delete(url, params) {
-        return new SimpleXHR().delete(url, params);
+        return new xmlFetch().delete(url, params);
     }
 }
 
 export { http };
-export default SimpleXHR;
+export default xmlFetch;
