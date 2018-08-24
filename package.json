@@ -2,13 +2,18 @@
     "author": "qrik116",
     "name": "xml-fetch",
     "description": "XMLHttpRequest as fetch",
-    "version": "1.0.1",
+    "version": "1.1.1",
     "license": "MIT",
+    "main": "dist/index.js",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/qrik116/xml-fetch"
     },
     "scripts": {
+        "precompile": "rimraf dist",
+        "compile": "tsc",
+        "prebuild": "rimraf dist",
+        "build": "tsc --sourceMap false && uglifyjs --compress --mangle --output dist/index.min.js dist/index.js",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "keywords": [
@@ -20,6 +25,8 @@
         "promise XMLHttpRequest"
     ],
     "dependencies": {
-        "querystring": "^0.2.0"
+        "@types/query-string": "^6.1.0",
+        "query-string": "0.2.0",
+        "typescript": "3.0.1"
     }
 }
