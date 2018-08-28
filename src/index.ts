@@ -19,7 +19,7 @@ type TOptionsRequire = {
 };
 
 type TRequestParams = {
-    files?: { [x: string]: [] },
+    files?: { [x: string]: Blob[] },
     data?: { [x: string]: []|string }
 };
 
