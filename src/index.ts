@@ -1,8 +1,21 @@
 import querystring from 'query-string';
 
+type THeaders = { [x: string]: string };
+
 type TOptions = {
     method?: string,
-    async?: boolean
+    async?: boolean,
+    headers?: THeaders,
+    timeout?: number,
+    timeoutError?: string
+};
+
+type TOptionsRequire = {
+    method: string,
+    async: boolean,
+    headers: THeaders,
+    timeout: number,
+    timeoutError: string
 };
 
 type TRequestParams = {
@@ -13,30 +26,36 @@ type TRequestParams = {
 type TCallBackFunc = (data?: any) => any;
 
 interface IXmlFetch {
-    get(url: string, { ...params }: object, customMethod?: string): XmlFetch;
-    post(url: string, { ...params }: TRequestParams, customMethod?: string): XmlFetch;
-    put(url: string, { ...params }: TRequestParams): XmlFetch;
-    delete(url: string, { ...params }: object): XmlFetch;
+    get(url: string, { ...params }: object, options?: TOptions): XmlFetch;
+    post(url: string, { ...params }: TRequestParams, options?: TOptions): XmlFetch;
+    put(url: string, { ...params }: TRequestParams,  options?: TOptions): XmlFetch;
+    delete(url: string, { ...params }: object,  options?: TOptions): XmlFetch;
 };
 
 class XmlFetch implements IXmlFetch {
-    private _options: { method: string, async: boolean } = {
+    static options: TOptionsRequire = {
         method: 'GET',
-        async: true
+        async: true,
+        headers: {},
+        timeout: 30000,
+        timeoutError: 'Извините, запрос превысил максимальное время ожидания'
     };
-    private _async: boolean = true;
+
+    private _options: TOptionsRequire;
     private _xhr: XMLHttpRequest = new XMLHttpRequest();
     private _pending: boolean = false;
     private _callbackResponce: Array<TCallBackFunc> = [];
     private _callbackError: Array<TCallBackFunc> = [];
 
     constructor(options: TOptions = {}) {
-        this._options = { ...this._options, ...options };
-        this._xhr.onload = this.handlerLoad(this);
+        this._options = { ...XmlFetch.options, ...options };
+        this._xhr.onload = this._handlerLoad(this);
+        this._xhr.timeout = this._options.timeout;
+        this._xhr.ontimeout = () => this._handlerError(new Error(this._options.timeoutError));
     }
 
     get options(): TOptions {
-        return this._options;
+        return { ...this._options };
     }
 
     set options(options: TOptions) {
@@ -46,23 +65,23 @@ class XmlFetch implements IXmlFetch {
     /**
      * Установка данных в body, используя FormData
      */
-    private setDataBody(options: { body: FormData, key: string }, data: string|[]): void {
+    private _getDataBody(key: string, data: string|[]): string {
         if (Array.isArray(data)) {
-            data.forEach(value => options.body.append(options.key, value));
-        } else {
-            options.body.append(options.key, data);
+            return data.map(value => querystring.stringify({ [key]: value })).join('&');
         }
+
+        return querystring.stringify({ [key]: data });
     }
 
     /**
      * Обработчик события полной загрузки на xhr
      */
-    private handlerLoad(self: XmlFetch): () => any {
+    private _handlerLoad(self: XmlFetch): () => any {
         let response: any = {};
 
         return function onload(this: XMLHttpRequest): any {
             if ((this.status < 400 || this.status >= 500) && this.status !== 200) {
-                self.handlerError(new Error(`${this.status} ${this.statusText}`));
+                self._handlerError(new Error(`${this.status} ${this.statusText}`));
                 return;
             }
 
@@ -79,18 +98,18 @@ class XmlFetch implements IXmlFetch {
                         response = errors;
                     }
                 }
-                self.handlerError(new Error(response.errors));
+                self._handlerError(new Error(response.errors));
                 return;
             }
 
-            self.handlerSuccess(response);
+            self._handlerSuccess(response);
         }
     }
 
     /**
      * Обрабатчик ошибок
      */
-    private handlerError(error: Error): void {
+    private _handlerError(error: Error): void {
         this._pending = false;
         this._callbackError.reduce((res, fn) => {
             if (Array.isArray(res)) {
@@ -108,7 +127,7 @@ class XmlFetch implements IXmlFetch {
     /**
      * Обрабатчик успешного запроса
      */
-    private handlerSuccess(data: any): void {
+    private _handlerSuccess(data: any): void {
         this._pending = false;
         this._callbackResponce.reduce((res, fn) => {
             if (Array.isArray(res)) {
@@ -124,14 +143,29 @@ class XmlFetch implements IXmlFetch {
     }
 
     /**
+     * Установка заголовков
+     */
+    private _setHeaders() {
+        const { headers } = this._options;
+
+        for (const name in headers) {
+            this._xhr.setRequestHeader(name, headers[name]);
+        }
+    }
+
+    /**
      * Общий запрос
      */
-    private request(url: string,
+    private _request(
+        url: string,
         { query = {}, ...params }: { query?: object, body?: string | FormData }
     ): void {
         if (!this._pending) {
+            const search_query = query ? `?${querystring.stringify(query)}` : '';
+
             this._pending = true;
-            this._xhr.open(this._options.method, `${url}?${querystring.stringify(query)}`, this._async);
+            this._xhr.open(this._options.method, `${url}${search_query}`, this._options.async);
+            this._setHeaders();
             this._xhr.send(params.body);
         }
     }
@@ -139,10 +173,10 @@ class XmlFetch implements IXmlFetch {
     /**
      * GET запрос
      */
-    public get(url: string, { ...params }: object, customMethod?: string): XmlFetch {
-        this._options.method = customMethod || 'GET';
+    public get(url: string, { ...params }: object, options?: TOptions): XmlFetch {
+        this.options = { method: 'GET', ...options };
 
-        this.request(url, params);
+        this._request(url, params);
 
         return this;
     }
@@ -150,28 +184,44 @@ class XmlFetch implements IXmlFetch {
     /**
      * POST запрос
      */
-    public post(url: string, { ...params }: TRequestParams, customMethod?: string): XmlFetch {
+    public post(url: string, { ...params }: TRequestParams, options?: TOptions): XmlFetch {
         const { files, data } = params;
-        const options: { body: FormData, } = {
-            body: new FormData(),
+        const reqParams: { body: string|FormData, } = {
+            body: '',
         };
 
-        this._options.method = customMethod || 'POST';
-        this._xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+        this.options = { method: 'POST', ...options };
 
         if (files) {
+            const Fdata = new FormData();
+
             for (const key in files) {
-                files[key].forEach(file => options.body.append(key, file));
+                files[key].forEach(file => Fdata.append(key, file));
+            }
+
+            if (data) {
+                for (const key in data) {
+                    Fdata.append(key, <string>data[key]);
+                }
+            }
+            
+            reqParams.body = Fdata;
+        } else {
+            if (data) {
+                if (!this._options.headers['Content-Type'])
+                    this._options.headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
+
+                if (typeof data === 'string') {
+                    reqParams.body = data;
+                } else {
+                    reqParams.body = Object.keys(data).map(key => {
+                        return this._getDataBody(key, data[key]);
+                    }).join('&');
+                }
             }
         }
 
-        if (data) {
-            for (const key in data) {
-                this.setDataBody({ body: options.body, key }, data[key]);
-            }
-        }
-
-        this.request(url, options);
+        this._request(url, reqParams);
 
         return this;
     }
@@ -179,19 +229,15 @@ class XmlFetch implements IXmlFetch {
     /**
      * PUT запрос
      */
-    public put(url: string, { ...params }: TRequestParams): XmlFetch {
-        const method = 'PUT';
-
-        return this.post(url, params, method);
+    public put(url: string, { ...params }: TRequestParams, options?: TOptions): XmlFetch {
+        return this.post(url, params, { method: 'PUT', ...options });
     }
 
     /**
      * DELETE запрос
      */
-    public delete(url: string, { ...params }: object): XmlFetch {
-        const method = 'DELETE';
-
-        return this.get(url, params, method);
+    public delete(url: string, { ...params }: object, options?: TOptions): XmlFetch {
+        return this.get(url, params, { method: 'DELETE', ...options });
     }
 
     /**
@@ -228,17 +274,17 @@ class XmlFetch implements IXmlFetch {
 }
 
 const http: IXmlFetch = {
-    get(url, params) {
-        return new XmlFetch().get(url, params);
+    get(url, params, options) {
+        return new XmlFetch().get(url, params, options);
     },
-    post(url, params) {
-        return new XmlFetch().post(url, params);
+    post(url, params, options) {
+        return new XmlFetch().post(url, params, options);
     },
-    put(url, params) {
-        return new XmlFetch().put(url, params);
+    put(url, params, options) {
+        return new XmlFetch().put(url, params, options);
     },
-    delete(url, params) {
-        return new XmlFetch().delete(url, params);
+    delete(url, params, options) {
+        return new XmlFetch().delete(url, params, options);
     }
 }
 

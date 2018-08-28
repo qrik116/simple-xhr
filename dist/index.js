@@ -1,3 +1,4 @@
+"use strict";
 var __assign = (this && this.__assign) || function () {
     __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -21,216 +22,237 @@ var __rest = (this && this.__rest) || function (s, e) {
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-(function (factory) {
-    if (typeof module === "object" && typeof module.exports === "object") {
-        var v = factory(require, exports);
-        if (v !== undefined) module.exports = v;
+Object.defineProperty(exports, "__esModule", { value: true });
+var query_string_1 = __importDefault(require("query-string"));
+;
+var XmlFetch = /** @class */ (function () {
+    function XmlFetch(options) {
+        if (options === void 0) { options = {}; }
+        var _this = this;
+        this._xhr = new XMLHttpRequest();
+        this._pending = false;
+        this._callbackResponce = [];
+        this._callbackError = [];
+        this._options = __assign({}, XmlFetch.options, options);
+        this._xhr.onload = this._handlerLoad(this);
+        this._xhr.timeout = this._options.timeout;
+        this._xhr.ontimeout = function () { return _this._handlerError(new Error(_this._options.timeoutError)); };
     }
-    else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "query-string"], factory);
-    }
-})(function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    var query_string_1 = __importDefault(require("query-string"));
-    ;
-    var XmlFetch = /** @class */ (function () {
-        function XmlFetch(options) {
-            if (options === void 0) { options = {}; }
-            this._options = {
-                method: 'GET',
-                async: true
-            };
-            this._async = true;
-            this._xhr = new XMLHttpRequest();
-            this._pending = false;
-            this._callbackResponce = [];
-            this._callbackError = [];
+    Object.defineProperty(XmlFetch.prototype, "options", {
+        get: function () {
+            return __assign({}, this._options);
+        },
+        set: function (options) {
             this._options = __assign({}, this._options, options);
-            this._xhr.onload = this.handlerLoad(this);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    /**
+     * Установка данных в body, используя FormData
+     */
+    XmlFetch.prototype._getDataBody = function (key, data) {
+        var _a;
+        if (Array.isArray(data)) {
+            return data.map(function (value) {
+                var _a;
+                return query_string_1.default.stringify((_a = {}, _a[key] = value, _a));
+            }).join('&');
         }
-        Object.defineProperty(XmlFetch.prototype, "options", {
-            get: function () {
-                return this._options;
-            },
-            set: function (options) {
-                this._options = __assign({}, this._options, options);
-            },
-            enumerable: true,
-            configurable: true
-        });
-        /**
-         * Установка данных в body, используя FormData
-         */
-        XmlFetch.prototype.setDataBody = function (options, data) {
-            if (Array.isArray(data)) {
-                data.forEach(function (value) { return options.body.append(options.key, value); });
+        return query_string_1.default.stringify((_a = {}, _a[key] = data, _a));
+    };
+    /**
+     * Обработчик события полной загрузки на xhr
+     */
+    XmlFetch.prototype._handlerLoad = function (self) {
+        var response = {};
+        return function onload() {
+            if ((this.status < 400 || this.status >= 500) && this.status !== 200) {
+                self._handlerError(new Error(this.status + " " + this.statusText));
+                return;
             }
-            else {
-                options.body.append(options.key, data);
-            }
-        };
-        /**
-         * Обработчик события полной загрузки на xhr
-         */
-        XmlFetch.prototype.handlerLoad = function (self) {
-            var response = {};
-            return function onload() {
-                if ((this.status < 400 || this.status >= 500) && this.status !== 200) {
-                    self.handlerError(new Error(this.status + " " + this.statusText));
-                    return;
-                }
-                response = JSON.parse(this.responseText);
-                if (response.errors) {
-                    if (typeof response.errors === 'object') {
-                        var errorsKeys = Object.keys(response.errors);
-                        if (errorsKeys.length) {
-                            var errors_1 = {};
-                            errorsKeys.forEach(function (key) { return errors_1[key] = response.errors[key].msg; });
-                            response = errors_1;
-                        }
+            response = JSON.parse(this.responseText);
+            if (response.errors) {
+                if (typeof response.errors === 'object') {
+                    var errorsKeys = Object.keys(response.errors);
+                    if (errorsKeys.length) {
+                        var errors_1 = {};
+                        errorsKeys.forEach(function (key) { return errors_1[key] = response.errors[key].msg; });
+                        response = errors_1;
                     }
-                    self.handlerError(new Error(response.errors));
-                    return;
                 }
-                self.handlerSuccess(response);
-            };
-        };
-        /**
-         * Обрабатчик ошибок
-         */
-        XmlFetch.prototype.handlerError = function (error) {
-            this._pending = false;
-            this._callbackError.reduce(function (res, fn) {
-                if (Array.isArray(res)) {
-                    return fn(res.slice());
-                }
-                if (typeof res === 'object') {
-                    return fn(__assign({}, res));
-                }
-                return fn(res);
-            }, error);
-        };
-        /**
-         * Обрабатчик успешного запроса
-         */
-        XmlFetch.prototype.handlerSuccess = function (data) {
-            this._pending = false;
-            this._callbackResponce.reduce(function (res, fn) {
-                if (Array.isArray(res)) {
-                    return fn(res.slice());
-                }
-                if (typeof res === 'object') {
-                    return fn(__assign({}, res));
-                }
-                return fn(res);
-            }, data);
-        };
-        /**
-         * Общий запрос
-         */
-        XmlFetch.prototype.request = function (url, _a) {
-            var _b = _a.query, query = _b === void 0 ? {} : _b, params = __rest(_a, ["query"]);
-            if (!this._pending) {
-                this._pending = true;
-                this._xhr.open(this._options.method, url + "?" + query_string_1.default.stringify(query), this._async);
-                this._xhr.send(params.body);
+                self._handlerError(new Error(response.errors));
+                return;
             }
+            self._handlerSuccess(response);
         };
-        /**
-         * GET запрос
-         */
-        XmlFetch.prototype.get = function (url, _a, customMethod) {
-            var params = __rest(_a, []);
-            this._options.method = customMethod || 'GET';
-            this.request(url, params);
-            return this;
+    };
+    /**
+     * Обрабатчик ошибок
+     */
+    XmlFetch.prototype._handlerError = function (error) {
+        this._pending = false;
+        this._callbackError.reduce(function (res, fn) {
+            if (Array.isArray(res)) {
+                return fn(res.slice());
+            }
+            if (typeof res === 'object') {
+                return fn(__assign({}, res));
+            }
+            return fn(res);
+        }, error);
+    };
+    /**
+     * Обрабатчик успешного запроса
+     */
+    XmlFetch.prototype._handlerSuccess = function (data) {
+        this._pending = false;
+        this._callbackResponce.reduce(function (res, fn) {
+            if (Array.isArray(res)) {
+                return fn(res.slice());
+            }
+            if (typeof res === 'object') {
+                return fn(__assign({}, res));
+            }
+            return fn(res);
+        }, data);
+    };
+    /**
+     * Установка заголовков
+     */
+    XmlFetch.prototype._setHeaders = function () {
+        var headers = this._options.headers;
+        for (var name_1 in headers) {
+            this._xhr.setRequestHeader(name_1, headers[name_1]);
+        }
+    };
+    /**
+     * Общий запрос
+     */
+    XmlFetch.prototype._request = function (url, _a) {
+        var _b = _a.query, query = _b === void 0 ? {} : _b, params = __rest(_a, ["query"]);
+        if (!this._pending) {
+            var search_query = query ? "?" + query_string_1.default.stringify(query) : '';
+            this._pending = true;
+            this._xhr.open(this._options.method, "" + url + search_query, this._options.async);
+            this._setHeaders();
+            this._xhr.send(params.body);
+        }
+    };
+    /**
+     * GET запрос
+     */
+    XmlFetch.prototype.get = function (url, _a, options) {
+        var params = __rest(_a, []);
+        this.options = __assign({ method: 'GET' }, options);
+        this._request(url, params);
+        return this;
+    };
+    /**
+     * POST запрос
+     */
+    XmlFetch.prototype.post = function (url, _a, options) {
+        var _this = this;
+        var params = __rest(_a, []);
+        var files = params.files, data = params.data;
+        var reqParams = {
+            body: '',
         };
-        /**
-         * POST запрос
-         */
-        XmlFetch.prototype.post = function (url, _a, customMethod) {
-            var params = __rest(_a, []);
-            var files = params.files, data = params.data;
-            var options = {
-                body: new FormData(),
+        this.options = __assign({ method: 'POST' }, options);
+        if (files) {
+            var Fdata_1 = new FormData();
+            var _loop_1 = function (key) {
+                files[key].forEach(function (file) { return Fdata_1.append(key, file); });
             };
-            this._options.method = customMethod || 'POST';
-            this._xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
-            if (files) {
-                var _loop_1 = function (key) {
-                    files[key].forEach(function (file) { return options.body.append(key, file); });
-                };
-                for (var key in files) {
-                    _loop_1(key);
-                }
+            for (var key in files) {
+                _loop_1(key);
             }
             if (data) {
                 for (var key in data) {
-                    this.setDataBody({ body: options.body, key: key }, data[key]);
+                    Fdata_1.append(key, data[key]);
                 }
             }
-            this.request(url, options);
-            return this;
-        };
-        /**
-         * PUT запрос
-         */
-        XmlFetch.prototype.put = function (url, _a) {
-            var params = __rest(_a, []);
-            var method = 'PUT';
-            return this.post(url, params, method);
-        };
-        /**
-         * DELETE запрос
-         */
-        XmlFetch.prototype.delete = function (url, _a) {
-            var params = __rest(_a, []);
-            var method = 'DELETE';
-            return this.get(url, params, method);
-        };
-        /**
-         * Метод, содержащий callback
-         * @param {function} callback функция, срабатывающая после того как запрос выполнен
-         * успешно, первым аргументом которой является ответ,
-         * далее можно продолжить цепочку then, возвращая значение в предыдущем.
-         */
-        XmlFetch.prototype.then = function (callback) {
-            this._callbackResponce.push(callback);
-            return this;
-        };
-        /**
-         * Метод, содержащий callback
-         * @param {function} callback функция, срабатывающая после того как запрос выполнен
-         * c ошибкой, первым аргументом которой является ошибка
-         */
-        XmlFetch.prototype.catch = function (callback) {
-            this._callbackError.push(callback);
-            return this;
-        };
-        /**
-         * Отменяет запрос
-         */
-        XmlFetch.prototype.abort = function () {
-            this._xhr.abort();
-            return this;
-        };
-        return XmlFetch;
-    }());
-    var http = {
-        get: function (url, params) {
-            return new XmlFetch().get(url, params);
-        },
-        post: function (url, params) {
-            return new XmlFetch().post(url, params);
-        },
-        put: function (url, params) {
-            return new XmlFetch().put(url, params);
-        },
-        delete: function (url, params) {
-            return new XmlFetch().delete(url, params);
+            reqParams.body = Fdata_1;
         }
+        else {
+            if (data) {
+                if (!this._options.headers['Content-Type'])
+                    this._options.headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
+                if (typeof data === 'string') {
+                    reqParams.body = data;
+                }
+                else {
+                    reqParams.body = Object.keys(data).map(function (key) {
+                        return _this._getDataBody(key, data[key]);
+                    }).join('&');
+                }
+            }
+        }
+        this._request(url, reqParams);
+        return this;
     };
-    exports.http = http;
-    exports.default = XmlFetch;
-});
+    /**
+     * PUT запрос
+     */
+    XmlFetch.prototype.put = function (url, _a, options) {
+        var params = __rest(_a, []);
+        return this.post(url, params, __assign({ method: 'PUT' }, options));
+    };
+    /**
+     * DELETE запрос
+     */
+    XmlFetch.prototype.delete = function (url, _a, options) {
+        var params = __rest(_a, []);
+        return this.get(url, params, __assign({ method: 'DELETE' }, options));
+    };
+    /**
+     * Метод, содержащий callback
+     * @param {function} callback функция, срабатывающая после того как запрос выполнен
+     * успешно, первым аргументом которой является ответ,
+     * далее можно продолжить цепочку then, возвращая значение в предыдущем.
+     */
+    XmlFetch.prototype.then = function (callback) {
+        this._callbackResponce.push(callback);
+        return this;
+    };
+    /**
+     * Метод, содержащий callback
+     * @param {function} callback функция, срабатывающая после того как запрос выполнен
+     * c ошибкой, первым аргументом которой является ошибка
+     */
+    XmlFetch.prototype.catch = function (callback) {
+        this._callbackError.push(callback);
+        return this;
+    };
+    /**
+     * Отменяет запрос
+     */
+    XmlFetch.prototype.abort = function () {
+        this._xhr.abort();
+        return this;
+    };
+    XmlFetch.options = {
+        method: 'GET',
+        async: true,
+        headers: {},
+        timeout: 30000,
+        timeoutError: 'Извините, запрос превысил максимальное время ожидания'
+    };
+    return XmlFetch;
+}());
+var http = {
+    get: function (url, params, options) {
+        return new XmlFetch().get(url, params, options);
+    },
+    post: function (url, params, options) {
+        return new XmlFetch().post(url, params, options);
+    },
+    put: function (url, params, options) {
+        return new XmlFetch().put(url, params, options);
+    },
+    delete: function (url, params, options) {
+        return new XmlFetch().delete(url, params, options);
+    }
+};
+exports.http = http;
+exports.default = XmlFetch;
