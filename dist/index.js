@@ -24,8 +24,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var query_string_1 = __importDefault(require("query-string"));
-;
-var XmlFetch = /** @class */ (function () {
+var XmlFetch = (function () {
     function XmlFetch(options) {
         if (options === void 0) { options = {}; }
         var _this = this;
@@ -48,9 +47,6 @@ var XmlFetch = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    /**
-     * Установка данных в body, используя FormData
-     */
     XmlFetch.prototype._getDataBody = function (key, data) {
         var _a;
         if (Array.isArray(data)) {
@@ -61,9 +57,6 @@ var XmlFetch = /** @class */ (function () {
         }
         return query_string_1.default.stringify((_a = {}, _a[key] = data, _a));
     };
-    /**
-     * Обработчик события полной загрузки на xhr
-     */
     XmlFetch.prototype._handlerLoad = function (self) {
         var response = {};
         return function onload() {
@@ -87,9 +80,6 @@ var XmlFetch = /** @class */ (function () {
             self._handlerSuccess(response);
         };
     };
-    /**
-     * Обрабатчик ошибок
-     */
     XmlFetch.prototype._handlerError = function (error) {
         this._pending = false;
         this._callbackError.reduce(function (res, fn) {
@@ -102,9 +92,6 @@ var XmlFetch = /** @class */ (function () {
             return fn(res);
         }, error);
     };
-    /**
-     * Обрабатчик успешного запроса
-     */
     XmlFetch.prototype._handlerSuccess = function (data) {
         this._pending = false;
         this._callbackResponce.reduce(function (res, fn) {
@@ -117,18 +104,12 @@ var XmlFetch = /** @class */ (function () {
             return fn(res);
         }, data);
     };
-    /**
-     * Установка заголовков
-     */
     XmlFetch.prototype._setHeaders = function () {
         var headers = this._options.headers;
         for (var name_1 in headers) {
             this._xhr.setRequestHeader(name_1, headers[name_1]);
         }
     };
-    /**
-     * Общий запрос
-     */
     XmlFetch.prototype._request = function (url, _a) {
         var _b = _a.query, query = _b === void 0 ? {} : _b, params = __rest(_a, ["query"]);
         if (!this._pending) {
@@ -139,18 +120,12 @@ var XmlFetch = /** @class */ (function () {
             this._xhr.send(params.body);
         }
     };
-    /**
-     * GET запрос
-     */
     XmlFetch.prototype.get = function (url, _a, options) {
         var params = __rest(_a, []);
         this.options = __assign({ method: 'GET' }, options);
         this._request(url, params);
         return this;
     };
-    /**
-     * POST запрос
-     */
     XmlFetch.prototype.post = function (url, _a, options) {
         var _this = this;
         var params = __rest(_a, []);
@@ -191,42 +166,22 @@ var XmlFetch = /** @class */ (function () {
         this._request(url, reqParams);
         return this;
     };
-    /**
-     * PUT запрос
-     */
     XmlFetch.prototype.put = function (url, _a, options) {
         var params = __rest(_a, []);
         return this.post(url, params, __assign({ method: 'PUT' }, options));
     };
-    /**
-     * DELETE запрос
-     */
-    XmlFetch.prototype.delete = function (url, _a, options) {
+    XmlFetch.prototype.del = function (url, _a, options) {
         var params = __rest(_a, []);
         return this.get(url, params, __assign({ method: 'DELETE' }, options));
     };
-    /**
-     * Метод, содержащий callback
-     * @param {function} callback функция, срабатывающая после того как запрос выполнен
-     * успешно, первым аргументом которой является ответ,
-     * далее можно продолжить цепочку then, возвращая значение в предыдущем.
-     */
     XmlFetch.prototype.then = function (callback) {
         this._callbackResponce.push(callback);
         return this;
     };
-    /**
-     * Метод, содержащий callback
-     * @param {function} callback функция, срабатывающая после того как запрос выполнен
-     * c ошибкой, первым аргументом которой является ошибка
-     */
     XmlFetch.prototype.catch = function (callback) {
         this._callbackError.push(callback);
         return this;
     };
-    /**
-     * Отменяет запрос
-     */
     XmlFetch.prototype.abort = function () {
         this._xhr.abort();
         return this;
@@ -250,8 +205,8 @@ var http = {
     put: function (url, params, options) {
         return new XmlFetch().put(url, params, options);
     },
-    delete: function (url, params, options) {
-        return new XmlFetch().delete(url, params, options);
+    del: function (url, params, options) {
+        return new XmlFetch().del(url, params, options);
     }
 };
 exports.http = http;

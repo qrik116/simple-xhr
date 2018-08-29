@@ -1,36 +1,5 @@
+/// <reference path="declare.d.ts" />
 import querystring from 'query-string';
-
-type THeaders = { [x: string]: string };
-
-type TOptions = {
-    method?: string,
-    async?: boolean,
-    headers?: THeaders,
-    timeout?: number,
-    timeoutError?: string
-};
-
-type TOptionsRequire = {
-    method: string,
-    async: boolean,
-    headers: THeaders,
-    timeout: number,
-    timeoutError: string
-};
-
-type TRequestParams = {
-    files?: { [x: string]: Blob[] },
-    data?: { [x: string]: []|string }
-};
-
-type TCallBackFunc = (data?: any) => any;
-
-interface IXmlFetch {
-    get(url: string, { ...params }: object, options?: TOptions): XmlFetch;
-    post(url: string, { ...params }: TRequestParams, options?: TOptions): XmlFetch;
-    put(url: string, { ...params }: TRequestParams,  options?: TOptions): XmlFetch;
-    delete(url: string, { ...params }: object,  options?: TOptions): XmlFetch;
-};
 
 class XmlFetch implements IXmlFetch {
     static options: TOptionsRequire = {
@@ -236,7 +205,7 @@ class XmlFetch implements IXmlFetch {
     /**
      * DELETE запрос
      */
-    public delete(url: string, { ...params }: object, options?: TOptions): XmlFetch {
+    public del(url: string, { ...params }: object, options?: TOptions): XmlFetch {
         return this.get(url, params, { method: 'DELETE', ...options });
     }
 
@@ -283,8 +252,8 @@ const http: IXmlFetch = {
     put(url, params, options) {
         return new XmlFetch().put(url, params, options);
     },
-    delete(url, params, options) {
-        return new XmlFetch().delete(url, params, options);
+    del(url, params, options) {
+        return new XmlFetch().del(url, params, options);
     }
 }
 

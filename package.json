@@ -2,9 +2,10 @@
     "author": "qrik116",
     "name": "xml-fetch",
     "description": "XMLHttpRequest as fetch",
-    "version": "1.1.3",
+    "version": "1.1.4",
     "license": "MIT",
-    "main": "dist/index.js",
+    "main": "./dist/index.js",
+    "types": "./types/index.d.ts",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/qrik116/xml-fetch"
