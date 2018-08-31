@@ -19,20 +19,29 @@ declare type TOptionsRequire = {
     timeoutError: string
 }
 
-/** Параметры запроса */
-declare type TRequestParams = {
+/** Параметры запроса для POST метода */
+declare type TPostParams = {
     files?: { [x: string]: Blob[] },
-    data?: { [x: string]: []|string }
+    data: { [x: string]: []|string }
+}
+
+/** Параметры запроса для GET метода */
+declare type TGetParams = {
+    query: object
 }
 
 /** Callback функция */
 declare type TCallBackFunc = (data?: any) => any
 
-declare interface IXmlFetch {
-    get(url: string, { ...params }: object, options?: TOptions): XmlFetch;
-    post(url: string, { ...params }: TRequestParams, options?: TOptions): XmlFetch;
-    put(url: string, { ...params }: TRequestParams, options?: TOptions): XmlFetch;
-    del(url: string, { ...params }: object, options?: TOptions): XmlFetch;
+interface XmlFetch extends IXmlFetch {
+    then(callback: TCallBackFunc): XmlFetch;
+    catch(callback: TCallBackFunc): XmlFetch;
+    abort(): XmlFetch
 }
 
-declare class XmlFetch {}
+declare interface IXmlFetch {
+    get(url: string, params: TGetParams, options?: TOptions): XmlFetch;
+    post(url: string, params: TPostParams, options?: TOptions): XmlFetch;
+    put(url: string, params: TPostParams, options?: TOptions): XmlFetch;
+    del(url: string, params: TGetParams, options?: TOptions): XmlFetch;
+}

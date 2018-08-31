@@ -1,4 +1,4 @@
-/// <reference path="declare.d.ts" />
+/// <reference path="../src/declare.d.ts" />
 import querystring from 'query-string';
 
 class XmlFetch implements IXmlFetch {
@@ -142,7 +142,7 @@ class XmlFetch implements IXmlFetch {
     /**
      * GET запрос
      */
-    public get(url: string, { ...params }: object, options?: TOptions): XmlFetch {
+    public get(url: string, { ...params }: TGetParams, options?: TOptions): XmlFetch {
         this.options = { method: 'GET', ...options };
 
         this._request(url, params);
@@ -153,7 +153,7 @@ class XmlFetch implements IXmlFetch {
     /**
      * POST запрос
      */
-    public post(url: string, { ...params }: TRequestParams, options?: TOptions): XmlFetch {
+    public post(url: string, { ...params }: TPostParams, options?: TOptions): XmlFetch {
         const { files, data } = params;
         const reqParams: { body: string|FormData, } = {
             body: '',
@@ -198,14 +198,14 @@ class XmlFetch implements IXmlFetch {
     /**
      * PUT запрос
      */
-    public put(url: string, { ...params }: TRequestParams, options?: TOptions): XmlFetch {
+    public put(url: string, { ...params }: TPostParams, options?: TOptions): XmlFetch {
         return this.post(url, params, { method: 'PUT', ...options });
     }
 
     /**
      * DELETE запрос
      */
-    public del(url: string, { ...params }: object, options?: TOptions): XmlFetch {
+    public del(url: string, { ...params }: TGetParams, options?: TOptions): XmlFetch {
         return this.get(url, params, { method: 'DELETE', ...options });
     }
 
