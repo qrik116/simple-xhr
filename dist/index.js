@@ -61,20 +61,16 @@ var XmlFetch = (function () {
         var response = {};
         return function onload() {
             if ((this.status < 400 || this.status >= 500) && this.status !== 200) {
-                self._handlerError(new Error(this.status + " " + this.statusText));
+                self._handlerError(this.status + " " + this.statusText);
                 return;
             }
             response = JSON.parse(this.responseText);
             if (response.errors) {
                 if (typeof response.errors === 'object') {
-                    var errorsKeys = Object.keys(response.errors);
-                    if (errorsKeys.length) {
-                        var errors_1 = {};
-                        errorsKeys.forEach(function (key) { return errors_1[key] = response.errors[key].msg; });
-                        response = errors_1;
-                    }
+                    self._handlerError(__assign({}, response.errors));
+                    return;
                 }
-                self._handlerError(new Error(response.errors));
+                self._handlerError(response.errors);
                 return;
             }
             self._handlerSuccess(response);

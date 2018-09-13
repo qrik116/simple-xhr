@@ -1,4 +1,4 @@
-/// <reference path="../src/declare.d.ts" />
+/// <reference path="./declare.d.ts" />
 // Type definitions for xml-fetch
 // Project: https://github.com/qrik116/xml-fetch
 // Definitions by: Evgeniy Kozirev <https://github.com/qrik116>

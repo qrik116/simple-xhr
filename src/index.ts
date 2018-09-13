@@ -1,4 +1,4 @@
-/// <reference path="../src/declare.d.ts" />
+/// <reference path="../types/declare.d.ts" />
 import querystring from 'query-string';
 
 class XmlFetch implements IXmlFetch {
@@ -50,7 +50,7 @@ class XmlFetch implements IXmlFetch {
 
         return function onload(this: XMLHttpRequest): any {
             if ((this.status < 400 || this.status >= 500) && this.status !== 200) {
-                self._handlerError(new Error(`${this.status} ${this.statusText}`));
+                self._handlerError(`${this.status} ${this.statusText}`);
                 return;
             }
 
@@ -58,16 +58,10 @@ class XmlFetch implements IXmlFetch {
 
             if (response.errors) {
                 if (typeof response.errors === 'object') {
-                    const errorsKeys: string[] = Object.keys(response.errors);
-
-                    if (errorsKeys.length) {
-                        const errors: any = {};
-
-                        errorsKeys.forEach(key => errors[key] = response.errors[key].msg);
-                        response = errors;
-                    }
+                    self._handlerError({ ...response.errors })
+                    return;
                 }
-                self._handlerError(new Error(response.errors));
+                self._handlerError(response.errors);
                 return;
             }
 
@@ -78,7 +72,7 @@ class XmlFetch implements IXmlFetch {
     /**
      * Обрабатчик ошибок
      */
-    private _handlerError(error: Error): void {
+    private _handlerError(error: string | object): void {
         this._pending = false;
         this._callbackError.reduce((res, fn) => {
             if (Array.isArray(res)) {
