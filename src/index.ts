@@ -7,7 +7,8 @@ class XmlFetch implements IXmlFetch {
         async: true,
         headers: {},
         timeout: 30000,
-        timeoutError: 'Извините, запрос превысил максимальное время ожидания'
+        timeoutError: 'Извините, запрос превысил максимальное время ожидания',
+        removeEmpty: false,
     };
 
     private _options: TOptionsRequire;
@@ -29,6 +30,29 @@ class XmlFetch implements IXmlFetch {
 
     set options(options: TOptions) {
         this._options = { ...this._options, ...options };
+    }
+
+    /**
+     * Очищает объект от свойств с пустыми массивами
+     * @param object
+     */
+    static removeEmptyProps(object: TEmptyProps): TEmptyProps {
+        const clearObject: TEmptyProps = {};
+
+        for (let prop in object) {
+            if (object.hasOwnProperty(prop)) {
+                let value = object[prop];
+
+                if (Array.isArray(value) && value.length) {
+                    clearObject[prop] = value;
+                }
+
+                if ((typeof value === 'string' && value.length) || typeof value === 'number') {
+                    clearObject[prop] = value;
+                }
+            }
+        }
+        return clearObject;
     }
 
     /**
@@ -124,7 +148,11 @@ class XmlFetch implements IXmlFetch {
         { query = {}, ...params }: { query?: object, body?: string | FormData }
     ): void {
         if (!this._pending) {
-            const search_query = query ? `?${querystring.stringify(query)}` : '';
+            let search_query: string = '';
+
+            if (query) {
+                search_query = querystring.stringify(this._options.removeEmpty ? XmlFetch.removeEmptyProps(query) : query);
+            }
 
             this._pending = true;
             this._xhr.open(this._options.method, `${url}${search_query}`, this._options.async);

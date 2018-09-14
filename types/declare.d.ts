@@ -1,5 +1,6 @@
 /** HTTP заголовки */
 declare type THeaders = { [x: string]: string }
+declare type TEmptyProps = { [x: string]: any }
 
 /** Опции конструктора */
 declare type TOptions = {
@@ -7,7 +8,8 @@ declare type TOptions = {
     async?: boolean,
     headers?: THeaders,
     timeout?: number,
-    timeoutError?: string
+    timeoutError?: string,
+    removeEmpty?: boolean
 }
 
 /** Обязательные опций конструктора */
@@ -16,7 +18,8 @@ declare type TOptionsRequire = {
     async: boolean,
     headers: THeaders,
     timeout: number,
-    timeoutError: string
+    timeoutError: string,
+    removeEmpty: boolean
 }
 
 /** Параметры запроса для POST метода */
@@ -40,8 +43,12 @@ interface XmlFetch extends IXmlFetch {
 }
 
 declare interface IXmlFetch {
+    /** GET запрос */
     get(url: string, params: TGetParams, options?: TOptions): XmlFetch;
+    /** POST запрос */
     post(url: string, params: TPostParams, options?: TOptions): XmlFetch;
+    /** PUT запрос */
     put(url: string, params: TPostParams, options?: TOptions): XmlFetch;
+    /** DELETE запрос */
     del(url: string, params: TGetParams, options?: TOptions): XmlFetch;
 }

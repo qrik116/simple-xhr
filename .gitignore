@@ -14,6 +14,7 @@ book_img
 package-lock.json
 
 public
+dist
 
 checkerboard@2.0.0
 nodemon
