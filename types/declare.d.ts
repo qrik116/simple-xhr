@@ -4,11 +4,17 @@ declare type TEmptyProps = { [x: string]: any }
 
 /** Опции конструктора */
 declare type TOptions = {
+    /** Метод запроса, по умолчанию GET */
     method?: string,
+    /** Асинхронный запрос, по умолчанию false */
     async?: boolean,
+    /** Заголовки */
     headers?: THeaders,
+    /** Время жизни запроса, по умолчанию 30000 */
     timeout?: number,
+    /** Текст ошибки по истечению жизни запроса */
     timeoutError?: string,
+    /** Очищать пустые свойства объекта, по умолчанию false */
     removeEmpty?: boolean
 }
 

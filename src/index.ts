@@ -151,7 +151,7 @@ class XmlFetch implements IXmlFetch {
             let search_query: string = '';
 
             if (query) {
-                search_query = querystring.stringify(this._options.removeEmpty ? XmlFetch.removeEmptyProps(query) : query);
+                search_query = '?' + querystring.stringify(this._options.removeEmpty ? XmlFetch.removeEmptyProps(query) : query);
             }
 
             this._pending = true;
