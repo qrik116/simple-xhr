@@ -33,7 +33,7 @@ class XmlFetch implements IXmlFetch {
     }
 
     /**
-     * Очищает объект от свойств с пустыми массивами
+     * Очищает объект от свойств с пустыми значениями
      * @param object
      */
     static removeEmptyProps(object: TEmptyProps): object {

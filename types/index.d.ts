@@ -8,10 +8,10 @@ declare class XmlFetch implements IXmlFetch {
     constructor(options?: TOptions);
     options: TOptions;
     /**
-     * Очищает объект от свойств с пустыми массивами
+     * Очищает объект от свойств с пустыми значениями
      * @param object
      */
-    static removeEmptyProps(object: TEmptyProps): TEmptyProps;
+    static removeEmptyProps(object: TEmptyProps): object;
     get(url: string, { ...params }: TGetParams, options?: TOptions): XmlFetch;
     post(url: string, { ...params }: TPostParams, options?: TOptions): XmlFetch;
     put(url: string, { ...params }: TPostParams, options?: TOptions): XmlFetch;
