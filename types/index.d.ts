@@ -7,13 +7,29 @@ declare class XmlFetch implements IXmlFetch {
     static options: TOptionsRequire;
     constructor(options?: TOptions);
     options: TOptions;
+    /**
+     * Очищает объект от свойств с пустыми массивами
+     * @param object
+     */
     static removeEmptyProps(object: TEmptyProps): TEmptyProps;
     get(url: string, { ...params }: TGetParams, options?: TOptions): XmlFetch;
     post(url: string, { ...params }: TPostParams, options?: TOptions): XmlFetch;
     put(url: string, { ...params }: TPostParams, options?: TOptions): XmlFetch;
     del(url: string, { ...params }: TGetParams, options?: TOptions): XmlFetch;
+    /**
+     * Метод, содержащий callback
+     * @param {function} callback функция, срабатывающая после того как запрос выполнен
+     * успешно, первым аргументом которой является ответ,
+     * далее можно продолжить цепочку then, возвращая значение в предыдущем.
+     */
     then(callback: TCallBackFunc): XmlFetch;
+    /**
+     * Метод, содержащий callback
+     * @param {function} callback функция, срабатывающая после того как запрос выполнен
+     * c ошибкой, первым аргументом которой является ошибка
+     */
     catch(callback: TCallBackFunc): XmlFetch;
+    /** Отменяет запрос */
     abort(): XmlFetch;
 }
 

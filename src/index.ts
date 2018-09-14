@@ -36,7 +36,7 @@ class XmlFetch implements IXmlFetch {
      * Очищает объект от свойств с пустыми массивами
      * @param object
      */
-    static removeEmptyProps(object: TEmptyProps): TEmptyProps {
+    static removeEmptyProps(object: TEmptyProps): object {
         const clearObject: TEmptyProps = {};
 
         for (let prop in object) {
