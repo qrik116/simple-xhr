@@ -21,6 +21,7 @@ class XmlFetch implements IXmlFetch {
         this._options = { ...XmlFetch.options, ...options };
         this._xhr.onload = this._handlerLoad(this);
         this._xhr.timeout = this._options.timeout;
+        this._xhr.onerror = () => this._handlerError(new Error('Failed to fetch'));
         this._xhr.ontimeout = () => this._handlerError(new Error(this._options.timeoutError));
     }
 
@@ -94,13 +95,17 @@ class XmlFetch implements IXmlFetch {
     }
 
     /**
-     * Обрабатчик ошибок
+     * Обработчик ошибок
      */
     private _handlerError(error: string | object): void {
         this._pending = false;
         this._callbackError.reduce((res, fn) => {
             if (Array.isArray(res)) {
                 return fn([...res]);
+            }
+
+            if (res instanceof Error) {
+                return fn(res);
             }
 
             if (typeof res === 'object') {
